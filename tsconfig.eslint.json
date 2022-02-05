@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilationOptions": {
+        "rootDir": "."
+    },
+    "files": ["*.ts"],
+    "exclude": [],
+    "include": ["**/*.ts"],
+    "compilerOptions": {
+        "experimentalDecorators": true
+    }
+}

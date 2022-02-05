@@ -1,0 +1,39 @@
+{
+    "compilerOptions": {
+       "target": "es6",
+        "lib": [ "es6", "dom"],
+        "skipLibCheck": false,
+        "module": "commonjs",
+        "outDir": "dist",
+        "alwaysStrict": false,
+        "strict": false,
+        "composite": true,
+        "incremental": true,
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": false,
+        "removeComments": true,
+        "noLib": false,
+        "preserveConstEnums": true,
+        "experimentalDecorators": true,
+        "declaration": true,
+        "esModuleInterop": true,
+        "strictFunctionTypes": false,
+        "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
+        "resolveJsonModule": false,
+        "noStrictGenericChecks": false,
+        "noImplicitThis": true,
+        "skipDefaultLibCheck": false,
+        "allowJs": false
+    },
+    "exclude": [ "node_modules", "dist"],
+    "include": [],
+    "references": [
+        {
+            "path": "./thingweb.node-wot/packages/binding-opcua2"
+        },
+        {
+            "path": "./opcua-tools"
+        }
+    ]
+}

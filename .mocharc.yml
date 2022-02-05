@@ -1,0 +1,9 @@
+recursive: false
+require:
+    - ts-node/register
+timeout: 100000
+enable-source-maps: true
+# spec: "test/*_test.ts"
+extension: ts
+bail: true
+parallel: false
