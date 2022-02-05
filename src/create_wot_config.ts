@@ -35,7 +35,7 @@ import { readNamespaceArray } from "node-opcua-pseudo-session";
 import { Helpers } from "@node-wot/core";
 import { ExposedThingInit } from "wot-typescript-definitions";
 import { ActionElement, DataSchema } from "wot-thing-description-types";
-import { OPCUAFormElement } from "@node-wot/binding-opcua2/src/opcua_protocol_client";
+import { OPCUAFormElement } from "@node-wot/binding-opcua";
 import { toWotVariant } from "./to_node_wot_type";
 
 const objectFolderNodeId = resolveNodeId(ObjectIds.ObjectsFolder);

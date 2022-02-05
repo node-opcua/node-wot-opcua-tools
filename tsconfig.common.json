@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
        "target": "es6",
-        "lib": [ "es6", "dom"],
+        "lib": [ "es6"],
         "skipLibCheck": false,
         "module": "commonjs",
         "outDir": "dist",
@@ -30,10 +30,7 @@
     "include": [],
     "references": [
         {
-            "path": "./thingweb.node-wot/packages/binding-opcua2"
-        },
-        {
-            "path": "./opcua-tools"
+            "path": "./thingweb.node-wot/packages/binding-opcua"
         }
     ]
 }

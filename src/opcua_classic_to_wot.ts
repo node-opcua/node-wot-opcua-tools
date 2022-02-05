@@ -13,7 +13,7 @@ import { ThingProperty } from "@node-wot/td-tools";
 import { Servient } from "@node-wot/core";
 
 import { DataValueJSON } from "node-opcua-json";
-import { OPCUAClientFactory } from "@node-wot/binding-opcua2/src/factory";
+import { OPCUAClientFactory } from "@node-wot/binding-opcua/src/factory";
 import { getThingDescription } from "./create_wot_config";
 import { ExposedThing, InteractionOutput, PropertyReadHandler, ThingDescription } from "wot-typescript-definitions";
 import { DataType } from "node-opcua-variant";

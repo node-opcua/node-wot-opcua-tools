@@ -10,7 +10,7 @@
 /// -------------------- CUT HERE ---------------------------
 
 import { HttpServer, HttpClientFactory, HttpsClientFactory } from "@node-wot/binding-http";
-import { OPCUAClientFactory } from "@node-wot/binding-opcua2/src/factory";
+import { OPCUAClientFactory } from "@node-wot/binding-opcua/src/factory";
 import { Servient } from "@node-wot/core";
 import { DataSetMetaDataType, PublishedVariableDataType } from "node-opcua-types";
 
