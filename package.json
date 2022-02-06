@@ -32,6 +32,7 @@
         "@node-wot/core": "0.8.0",
         "@node-wot/td-tools": "0.8.0",
         "@node-wot/binding-opcua": "0.8.0",
+        "@node-wot/binding-http": "0.8.0",
         "case-anything": "^2.1.10",
         "commander": "^9.0.0",
         "node-fetch": "^2.6.7",
