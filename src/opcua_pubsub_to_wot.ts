@@ -18,7 +18,7 @@ import { extractPubSubInfo, PubSubInfo } from "./extract_pubsub_info";
 import { toWotVariant } from "./to_node_wot_type";
 import { JSONNetworkMessage } from "node-opcua-pubsub-expander";
 
-async function buildThingDescription({
+export async function buildThingDescriptionFromOPCUAPubSub({
     dataSetMeta,
     publishedVariables,
 }: {
@@ -123,7 +123,7 @@ export interface STUFF {
 export async function makeOPCUAPubSubServient(data: PubSubInfo, port: number): Promise<STUFF> {
     const { dataSetMeta, publishedVariables, addressUri, queueName } = data;
 
-    const thingDescription = await buildThingDescription(data);
+    const thingDescription = await buildThingDescriptionFromOPCUAPubSub(data);
 
     const { htppServient, wot } = await getWot(port);
     const thing = await wot.produce(thingDescription);
@@ -158,7 +158,7 @@ async function main() {
     const dataSetWriterName = "WriterSimple";
     const data = await extractPubSubInfo({ endpoint, publishedDataSetName, dataSetWriterName });
 
-    const thingDescription = await buildThingDescription(data);
+    const thingDescription = await buildThingDescriptionFromOPCUAPubSub(data);
 
     console.log("------------------------------ thing description");
     console.log(JSON.stringify(thingDescription, null, 2));
@@ -171,4 +171,7 @@ async function main() {
         });
     });
 }
-main();
+if (require.main === module) {
+    main();
+}
+

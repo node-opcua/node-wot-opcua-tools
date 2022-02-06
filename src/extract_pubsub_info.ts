@@ -104,16 +104,42 @@ export async function extractPubSubInfoSession(
 
     const publishedDataSet = map[publishedDataSetName];
     if (!publishedDataSet) {
-        console.log(`cannot find data set with name ${publishedDataSetName}
-            valid dataset names are = ${Object.keys(map).join(" ")}`);
+        
+        
+        console.log(`cannot find data set with name ${publishedDataSetName}.
+            Valid dataset names are = ${Object.keys(map).join(" ")}`);
+
+
+
         return { dataSetMeta: null, publishedVariables: [], addressUri: "", queueName: "" };
     }
 
+    const dataSetWriterCollection = await publishedDataSet.getDataSetWriterCollection();
+    const map2: Record<string, DataSetWriter> = {};
+    for (const dataSet of dataSetWriterCollection) {
+        const name = await dataSet.getBrowseName();
+        if (!name || !name.name) {
+            continue;
+        }
+        map2[name.name.toString()] = dataSet;
+    }
     const dataSetWriter = await getDataSetWriterByName(publishedDataSet, dataWriterName);
 
     const dataSetMeta = await publishedDataSet.getDataSetMetaData();
     const publishedVariables = await publishedDataSet.getPublishedData();
 
+    if (!dataSetWriter) {
+
+        console.log(`cannot find dataset writer  with name ${dataWriterName}.
+            Valid dataset names for ${publishedDataSetName} are = ${Object.keys(map2).join(" ")}`);
+    
+        for(const d of Object.values(map2)) {
+            const queueName = await d.getMetaDataQueueName();
+            const browseName = await d.getBrowseName();
+            console.log({ queueName, browseName,});
+        }
+        return { dataSetMeta: null, publishedVariables: [], addressUri: "", queueName: "" };
+    }
     const connection = await dataSetWriter.getConnection();
 
    let addressUri = await connection.getAddressUrl();
@@ -148,7 +174,7 @@ export async function extractPubSubInfo({
         },
     });
 
-    client.on("backoff", () => console.log("backoff", endpoint));
+    client.on("backoff", (nbRetry: number) => console.log("backoff",nbRetry, endpoint));
 
     return client.withSessionAsync(endpoint, async (session: ClientSession) => {
         return extractPubSubInfoSession(session, publishedDataSetName, dataSetWriterName);

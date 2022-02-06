@@ -176,6 +176,8 @@ async function addPropertyInThingDescription(
         forms: [
             {
                 href: "/",
+                contentType: "application/json",
+
             },
         ],
     };
@@ -335,8 +337,8 @@ export async function getThingDescriptionFromSession(
         description: "current time",
         observable: true,
         readOnly: true,
-        //  contentType: "application/opcua+json;type=DataValue",
-        contentType: "application/json",
+        contentType: "application/opcua+json;type=Value",
+        // contentType: "application/json",
         forms: [form1, form2],
     };
     // now explore the object
@@ -369,9 +371,9 @@ export async function getThingDescription(endpoint: string, pathToObject: string
 
 if (require.main === module) {
     (async () => {
-        const endpoint = process.argv[2] || "opc.tcp://localhost:48010";
+        const endpoint = process.argv[2];
         const opcuaPathToObject = process.argv[3];
-        if (!opcuaPathToObject) {
+        if (!endpoint || !opcuaPathToObject) {
             console.log("usage : node a.js opc.tcp://localhost:48010   /3:BuildingAutomation/3:AirConditioner_1");
             process.exit(1);
         }

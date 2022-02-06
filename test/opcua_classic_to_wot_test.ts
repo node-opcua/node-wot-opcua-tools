@@ -7,8 +7,8 @@
  *
  * ==========================================================================
  */
- import { writeFileSync } from "fs";
- import { OPCUAServer, DataType, StatusCodes, SessionContext, DataValue } from "node-opcua";
+import { writeFileSync } from "fs";
+import { OPCUAServer, DataType, StatusCodes, SessionContext, DataValue } from "node-opcua";
 import { ThingDescription } from "wot-typescript-definitions";
 
 import fetch, { Request } from "node-fetch";
@@ -22,10 +22,9 @@ import { createClassicOpcuaServer } from "./fixtures/classic_opcua_server";
 const httpPort = 8009;
 const opcuaPort = 2002;
 describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
-  
     let server: OPCUAServer;
     before(async () => {
-       server = await createClassicOpcuaServer(opcuaPort);
+        server = await createClassicOpcuaServer(opcuaPort);
     });
     after(async () => await server.shutdown());
 
@@ -37,7 +36,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
 
             const thingDescription = await getThingDescription(endpointUrl, opcuaPathToObject);
 
-            writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
+            //  writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
 
             const { shutdown, htmlServer, opcuaClient } = await makeServerClient(thingDescription as ThingDescription, httpPort);
             _shutdown = shutdown;
@@ -61,7 +60,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
                 contentType: "application/json",
                 expected: {
                     Value: { Type: 11, Body: 37.6 },
-                    SourceTimestamp: "2020-01-31T23:00:00.000Z"
+                    SourceTimestamp: "2020-01-31T23:00:00.000Z",
                 },
                 extra: "?type=DataValue",
             },

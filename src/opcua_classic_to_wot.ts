@@ -8,15 +8,17 @@
  * ==========================================================================
  */
 import { writeFileSync } from "fs";
+
 import { HttpServer } from "@node-wot/binding-http";
 import { ThingProperty } from "@node-wot/td-tools";
 import { Servient } from "@node-wot/core";
+import { OPCUAClientFactory } from "@node-wot/binding-opcua";
 
-import { DataValueJSON } from "node-opcua-json";
-import { OPCUAClientFactory } from "@node-wot/binding-opcua/src/factory";
-import { getThingDescription } from "./create_wot_config";
 import { ExposedThing, InteractionOutput, PropertyReadHandler, ThingDescription } from "wot-typescript-definitions";
 import { DataType } from "node-opcua-variant";
+import { DataValueJSON } from "node-opcua-json";
+
+import { getThingDescription } from "./create_wot_config";
 
 interface makeServerClientResult {
     shutdown: () => Promise<void>;
@@ -52,10 +54,10 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
     // do the binding/glueing
     for (const [propertyName, property] of Object.entries(thingDescription.properties) as [string, ThingProperty][]) {
         exposedThing.setPropertyReadHandler(propertyName, async (options) => {
-            const type =
+            const type =    
                 options && options.uriVariables && (<any>options.uriVariables).type
                     ? (<any>options.uriVariables).type
-                    : "DataValue";
+                    : "Value";
 
             const formIndex = options ? options.formIndex : 0;
             const form = property.forms[formIndex];
@@ -79,7 +81,8 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
                             return dataValue.Value?.Body;
                     }
                 })();
-                return a ? JSON.stringify(a) : "";
+                console.log("Here ",a);
+                return a ;// ? JSON.stringify(a) : "";
                 // const contentSerDes = ContentSerdes.get();
                 // const content2 = contentSerDes.valueToContent(dataValue, schemaDataValue, contentType);
                 // const body2 = (await ProtocolHelpers.readStreamFully(content2.body)).toString();
@@ -191,14 +194,14 @@ async function main() {
     const port = 8080;
 
     if (!opcuaPathToObject) {
-        console.log("usage : node a.js opc.tcp://localhost:48010  /3:BuildingAutomation/3:AirConditioner_1");
+        console.log("usage : ts-node opcua_classic_to_wot.ts opc.tcp://localhost:48010  /3:BuildingAutomation/3:AirConditioner_1");
         process.exit(1);
     }
 
     const thingDescription = await getThingDescription(endpointUrl, opcuaPathToObject);
 
     if (thingDescription) {
-        writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
+        // writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
         const { shutdown } = await makeServerClient(thingDescription as ThingDescription, port);
         await gracefulTermination(10 * 120 * 1000, shutdown);
     }
