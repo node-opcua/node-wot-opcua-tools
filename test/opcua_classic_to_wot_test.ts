@@ -110,7 +110,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
                 expect(response2.statusText).to.eql("OK");
                 const buf = await ProtocolHelpers.readStreamFully(response2.body);
                 // why do we need to parse twice ?
-                const body = JSON.parse(JSON.parse(buf.toString()));
+                const body = JSON.parse(buf.toString());
                 console.log("Body = ", JSON.stringify(body, null, ""));
                 // delete body.SourceTimestamp;
                 expect(body).to.eql(expected);
