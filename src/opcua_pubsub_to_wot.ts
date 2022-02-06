@@ -9,14 +9,14 @@
  *//// <reference types="wot-typescript-definitions" />
 /// -------------------- CUT HERE ---------------------------
 
-import { HttpServer, HttpClientFactory, HttpsClientFactory } from "@node-wot/binding-http";
-import { OPCUAClientFactory } from "@node-wot/binding-opcua/src/factory";
+import { HttpServer } from "@node-wot/binding-http";
+import { OPCUAClientFactory } from "@node-wot/binding-opcua";
 import { Servient } from "@node-wot/core";
 import { DataSetMetaDataType, PublishedVariableDataType } from "node-opcua-types";
+import { JSONNetworkMessage } from "node-opcua-pubsub-expander";
 
 import { extractPubSubInfo, PubSubInfo } from "./extract_pubsub_info";
 import { toWotVariant } from "./to_node_wot_type";
-import { JSONNetworkMessage } from "node-opcua-pubsub-expander";
 
 export async function buildThingDescriptionFromOPCUAPubSub({
     dataSetMeta,
