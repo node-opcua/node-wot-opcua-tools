@@ -7,7 +7,6 @@
  *
  * ==========================================================================
  */
-import { writeFileSync } from "fs";
 
 import { HttpServer } from "@node-wot/binding-http";
 import { ThingProperty } from "@node-wot/td-tools";
@@ -19,6 +18,7 @@ import { DataType } from "node-opcua-variant";
 import { DataValueJSON } from "node-opcua-json";
 
 import { getThingDescription } from "./create_wot_config";
+import { PropertyElement } from "wot-thing-description-types";
 
 interface makeServerClientResult {
     shutdown: () => Promise<void>;
@@ -48,20 +48,32 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
     opcuaServientClient.addClientFactory(new OPCUAClientFactory());
     const wotOPCUA = await opcuaServientClient.start();
 
-    const consumedThing: WoT.ConsumedThing = await wotOPCUA.consume(thingDescription);
+    // modidify all thing properties to have the form:
+    const thingDescriptionWithContentType = { 
+        ... thingDescription, 
+        properties: {
+            ... thingDescription.properties
+        }
+    };
+    Object.values(thingDescriptionWithContentType.properties).forEach((property: PropertyElement) => {
+        property.forms.forEach((form: any) => {
+            form.contentType = "application/opcua+json;type=DataValue";
+        });
+    });
+
+
+    const consumedThing: WoT.ConsumedThing = await wotOPCUA.consume(thingDescriptionWithContentType);
     console.log(`consume ${consumedThing.getThingDescription().title}`);
 
     // do the binding/glueing
     for (const [propertyName, property] of Object.entries(thingDescription.properties) as [string, ThingProperty][]) {
         exposedThing.setPropertyReadHandler(propertyName, async (options) => {
-            const type =    
-                options && options.uriVariables && (<any>options.uriVariables).type
-                    ? (<any>options.uriVariables).type
-                    : "Value";
+            const type =
+                options && options.uriVariables && (<any>options.uriVariables).type ? (<any>options.uriVariables).type : "Value";
 
             const formIndex = options ? options.formIndex : 0;
             const form = property.forms[formIndex];
-            const contentType = form?.contentType || "application/opcua+json;type=Value";
+            const contentType = form?.contentType || `application/opcua+json;type=${type}`;
 
             console.log("In ReadHandler of ", propertyName, options, "contentType= ", contentType);
             try {
@@ -81,14 +93,7 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
                             return dataValue.Value?.Body;
                     }
                 })();
-                console.log("Here ",a);
-                return a ;// ? JSON.stringify(a) : "";
-                // const contentSerDes = ContentSerdes.get();
-                // const content2 = contentSerDes.valueToContent(dataValue, schemaDataValue, contentType);
-                // const body2 = (await ProtocolHelpers.readStreamFully(content2.body)).toString();
-                // console.log("ReadHandler of ", propertyName, " returned ", JSON.stringify(dataValue))
-                // console.log("cxxxxxxxxxxxxxx", body2);
-                // return body2;
+                return a; // ? JSON.stringify(a) : "";
             } catch (err) {
                 return JSON.stringify({ Type: DataType.String, Body: err.message.split("\n") });
             }
@@ -201,7 +206,6 @@ async function main() {
     const thingDescription = await getThingDescription(endpointUrl, opcuaPathToObject);
 
     if (thingDescription) {
-        // writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
         const { shutdown } = await makeServerClient(thingDescription as ThingDescription, port);
         await gracefulTermination(10 * 120 * 1000, shutdown);
     }

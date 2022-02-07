@@ -54,7 +54,7 @@ describe("Testing OPCUA PubSub to HTTP Wot bridge bridge", () => {
             expect(response.status).to.equal(200);
             expect(response.statusText).to.eql("OK");
             const body = (await ProtocolHelpers.readStreamFully(response.body)).toString();
-            console.log("Body = ", body);
+            console.log("Body = ", body, "(", typeof body, ")");
             expect(typeof body).to.equal("string");
             return parseFloat(body);
         }

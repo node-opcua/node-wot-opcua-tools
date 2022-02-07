@@ -128,12 +128,12 @@ async function addActionInThingDescription(
     const { type } = { type: "object"};
     
     const action: ActionElement = {
-        href: "/",
+        href: extra.endpoint,
         type,
         description: description?.text || "",
         forms: [
             {
-                href: "/",
+                href: extra.endpoint,
             },
         ],
     };
@@ -164,20 +164,26 @@ async function addPropertyInThingDescription(
     const accessLevel = (await session.read({ nodeId, attributeId: AttributeIds.UserAccessLevel })).value.value as number;
 
     const wotVariant = toWotVariant(dataTypeNodeId, valueRank);
+
+    const readOnly =  (accessLevel & AccessLevelFlag.CurrentWrite) === 0 ? true: undefined;
     thingDescription.properties[name] = {
-        href: "/",
-        type: wotVariant.type,
+        href: extra.endpoint,
+
+        // type: wotVariant.type,
+    
         properties: wotVariant.properties,
         description: description?.text || "",
+        
         observable: true,
-        readOnly: true,
+        
+        readOnly,
+
         // special properties (just for us)
         nodeId,
         forms: [
             {
-                href: "/",
-                contentType: "application/json",
-
+                href: extra.endpoint,
+                //xx contentType: "application/json",
             },
         ],
     };
@@ -195,11 +201,11 @@ async function addPropertyInThingDescription(
     }
 
     const form: OPCUAFormElement = {
-        href: "/",
+        href: extra.endpoint,
         op: ["readproperty", "observeproperty", "unobserveproperty"],
         "opcua:nodeId": nodeId.toString(),
        //  contentType: "application/opcua+json;type=Variant",
-       contentType: "application/json",
+       //  contentType: "application/json",
     };
 
     if ((accessLevel & AccessLevelFlag.CurrentWrite) === AccessLevelFlag.CurrentWrite) {
@@ -323,23 +329,23 @@ export async function getThingDescriptionFromSession(
         contentType: "application/json",
     };
 
-    const form2: OPCUAFormElement = {
-        href: extra.endpoint || "",
-        op: ["readproperty", "observeproperty"], //  "observeproperty", "unobserveproperty"],
-        // special properties (just for us)
-        "opcua:nodeId": resolveNodeId(VariableIds.Server_ServerStatus_CurrentTime),
-        //  contentType: "application/opcua+json;type=DataValue",
-        contentType: "application/json",
-    };
+    // const form2: OPCUAFormElement = {
+    //     href: extra.endpoint || "",
+    //     op: ["readproperty", "observeproperty"], //  "observeproperty", "unobserveproperty"],
+    //     // special properties (just for us)
+    //     "opcua:nodeId": resolveNodeId(VariableIds.Server_ServerStatus_CurrentTime),
+    //     //  contentType: "application/opcua+json;type=DataValue",
+    //     contentType: "application/json",
+    // };
     thingDescription.properties.CurrentTime = {
         href: "/",
         type: "object", // toNodeWotType(resolveNodeId(DataType.DateTime)),
         description: "current time",
         observable: true,
         readOnly: true,
-        contentType: "application/opcua+json;type=Value",
+        // contentType: "application/opcua+json;type=Value",
         // contentType: "application/json",
-        forms: [form1, form2],
+        forms: [form1],
     };
     // now explore the object
     await exploreNode(thingDescription, extra, session, deviceNodeId);
