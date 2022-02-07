@@ -78,6 +78,7 @@
         "typescript": "4.5.5"
     },
     "scripts": {
+        "start": "node dist/bin/node-wot-opcua.js",
         "build": "tsc",
         "ncu": "npx npm-check-updates -u -x node-fetch",
         "ncu:opcua": "npx npm-check-updates -u -f \"node-opcua*\" -t newest",
