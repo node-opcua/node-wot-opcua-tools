@@ -29,8 +29,8 @@ import {
     LocalizedText,
     //   EUInformation,
 } from "node-opcua";
-import { Argument, EUInformation } from "node-opcua-types";
-import { readNamespaceArray } from "node-opcua-pseudo-session";
+import { Argument, BrowseResult, EUInformation } from "node-opcua-types";
+import { BrowseDescriptionLike, readNamespaceArray } from "node-opcua-pseudo-session";
 
 import { Helpers } from "@node-wot/core";
 import { ExposedThingInit } from "wot-typescript-definitions";
@@ -93,7 +93,6 @@ function convertArgument(opcuaArgument: Argument): DataSchema {
         //  type: toNodeWotType(argument.dataType),
         //     description: argument.description?.text || "",
         description: opcuaArgument.description.text || "",
-        
     };
 }
 function turnArguments(opcuaArguments: Argument[]): DataSchema {
@@ -119,14 +118,12 @@ async function addActionInThingDescription(
     thingDescription: ExposedThingInit,
     extra: Extra
 ): Promise<void> {
-  
-
     const nodeId = reference.nodeId;
     const description = (await session.read({ nodeId, attributeId: AttributeIds.Description })).value.value;
     const { inputArguments, outputArguments } = await extractInputAndOutputArguments(session, nodeId);
 
-    const { type } = { type: "object"};
-    
+    const { type } = { type: "object" };
+
     const action: ActionElement = {
         href: extra.endpoint,
         type,
@@ -138,7 +135,7 @@ async function addActionInThingDescription(
         ],
     };
 
-    thingDescription.actions =  thingDescription.actions || {};
+    thingDescription.actions = thingDescription.actions || {};
     thingDescription.actions[name] = action;
 
     if (inputArguments.length) {
@@ -165,17 +162,17 @@ async function addPropertyInThingDescription(
 
     const wotVariant = toWotVariant(dataTypeNodeId, valueRank);
 
-    const readOnly =  (accessLevel & AccessLevelFlag.CurrentWrite) === 0 ? true: undefined;
+    const readOnly = (accessLevel & AccessLevelFlag.CurrentWrite) === 0 ? true : undefined;
     thingDescription.properties[name] = {
         href: extra.endpoint,
 
         // type: wotVariant.type,
-    
+
         properties: wotVariant.properties,
         description: description?.text || "",
-        
+
         observable: true,
-        
+
         readOnly,
 
         // special properties (just for us)
@@ -204,8 +201,8 @@ async function addPropertyInThingDescription(
         href: extra.endpoint,
         op: ["readproperty", "observeproperty", "unobserveproperty"],
         "opcua:nodeId": nodeId.toString(),
-       //  contentType: "application/opcua+json;type=Variant",
-       //  contentType: "application/json",
+        //  contentType: "application/opcua+json;type=Variant",
+        //  contentType: "application/json",
     };
 
     if ((accessLevel & AccessLevelFlag.CurrentWrite) === AccessLevelFlag.CurrentWrite) {
@@ -229,8 +226,35 @@ async function addPropertyInThingDescription(
         */
 }
 
-async function _exploreNode(thingDescription: ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, referenceType: "HasChild" | "Organizes", prefix = "", separator =".") {
-    const browseResult = await session.browse({
+async function sessionBrowseAll(session: IBasicSession, browseDescription: BrowseDescriptionLike): Promise<BrowseResult> {
+    const browseResult = await session.browse(browseDescription);
+    if (browseResult.statusCode !== StatusCodes.Good) {
+        return browseResult;
+    }
+
+    let continuationPoint = browseResult.continuationPoint;
+    while (continuationPoint) {
+        const n = await session.browseNext(continuationPoint, false);
+        if (n.statusCode !== StatusCodes.Good) {
+            return browseResult;
+        }
+        browseResult.references = browseResult.references.concat(n.references);
+        continuationPoint = n.continuationPoint;
+    }
+    return browseResult;
+}
+
+async function _exploreNode(
+    thingDescription: ExposedThingInit,
+    extra: Extra,
+    session: IBasicSession,
+    nodeId: NodeId,
+    referenceType: "HasChild" | "Organizes",
+    prefix = "",
+    separator = "."
+) {
+
+    const browseResult = await sessionBrowseAll(session, {
         browseDirection: BrowseDirection.Forward,
         nodeId,
         includeSubtypes: true,
@@ -326,7 +350,7 @@ export async function getThingDescriptionFromSession(
 
     const form1: OPCUAFormElement = {
         href: extra.endpoint || "",
-        op: ["readproperty" ,"observeproperty"], //  "observeproperty", "unobserveproperty"],
+        op: ["readproperty", "observeproperty"], //  "observeproperty", "unobserveproperty"],
         // special properties (just for us)
         "opcua:nodeId": resolveNodeId(VariableIds.Server_ServerStatus_CurrentTime),
         //  contentType: "application/opcua+json;type=DataValue",
