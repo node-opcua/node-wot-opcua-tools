@@ -229,12 +229,12 @@ async function addPropertyInThingDescription(
         */
 }
 
-async function exploreNode(thingDescription: ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, prefix = "") {
+async function _exploreNode(thingDescription: ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, referenceType: "HasChild" | "Organizes", prefix = "", separator =".") {
     const browseResult = await session.browse({
         browseDirection: BrowseDirection.Forward,
         nodeId,
         includeSubtypes: true,
-        referenceTypeId: "HasChild",
+        referenceTypeId: referenceType,
         nodeClassMask: 0xfff,
         resultMask: 0x3f,
     });
@@ -249,10 +249,10 @@ async function exploreNode(thingDescription: ExposedThingInit, extra: Extra, ses
         switch (reference.nodeClass) {
             case NodeClass.Variable:
                 await addPropertyInThingDescription(name, session, reference, thingDescription, extra);
-                await exploreNode(thingDescription, extra, session, reference.nodeId, name + ".");
+                await exploreNode(thingDescription, extra, session, reference.nodeId, name + separator);
                 break;
             case NodeClass.Object:
-                await exploreNode(thingDescription, extra, session, reference.nodeId, name + ".");
+                await exploreNode(thingDescription, extra, session, reference.nodeId, name + separator);
                 break;
             case NodeClass.Method:
                 await addActionInThingDescription(name, session, reference, thingDescription, extra);
@@ -261,6 +261,10 @@ async function exploreNode(thingDescription: ExposedThingInit, extra: Extra, ses
             /* ignore */
         }
     }
+}
+async function exploreNode(thingDescription: ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, prefix = "") {
+    await _exploreNode(thingDescription, extra, session, nodeId, "HasChild", prefix, ".");
+    await _exploreNode(thingDescription, extra, session, nodeId, "Organizes", prefix, "/");
 }
 
 async function readDataValue(endpoint: string, nodeId: NodeId): Promise<DataValue> {
