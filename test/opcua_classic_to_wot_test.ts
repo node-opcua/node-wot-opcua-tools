@@ -19,6 +19,7 @@ import { getThingDescription } from "../src/create_wot_config";
 import { makeServerClient } from "../src/opcua_classic_to_wot";
 import { createClassicOpcuaServer } from "./fixtures/classic_opcua_server";
 
+const doDebug = false;
 const httpPort = 8009;
 const opcuaPort = 2002;
 describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
@@ -36,7 +37,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
 
             const thingDescription = await getThingDescription(endpointUrl, opcuaPathToObject);
 
-            //  writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
+            doDebug && writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
 
             const { shutdown, htmlServer, opcuaClient } = await makeServerClient(thingDescription as ThingDescription, httpPort);
             _shutdown = shutdown;

@@ -18,7 +18,6 @@ import { DataType } from "node-opcua-variant";
 import { DataValueJSON } from "node-opcua-json";
 
 import { getThingDescription } from "./create_wot_config";
-import { PropertyElement } from "wot-thing-description-types";
 
 interface makeServerClientResult {
     shutdown: () => Promise<void>;
@@ -49,18 +48,17 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
     const wotOPCUA = await opcuaServientClient.start();
 
     // modidify all thing properties to have the form:
-    const thingDescriptionWithContentType = { 
-        ... thingDescription, 
+    const thingDescriptionWithContentType = {
+        ...thingDescription,
         properties: {
-            ... thingDescription.properties
-        }
+            ...thingDescription.properties,
+        },
     };
-    Object.values(thingDescriptionWithContentType.properties).forEach((property: PropertyElement) => {
+    Object.values(thingDescriptionWithContentType.properties).forEach((property: any) => {
         property.forms.forEach((form: any) => {
             form.contentType = "application/opcua+json;type=DataValue";
         });
     });
-
 
     const consumedThing: WoT.ConsumedThing = await wotOPCUA.consume(thingDescriptionWithContentType);
     console.log(`consume ${consumedThing.getThingDescription().title}`);
@@ -77,7 +75,11 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
 
             console.log("In ReadHandler of ", propertyName, options, "contentType= ", contentType);
             try {
-                const localOptions: any = { uriVariables: "type=" + "DataValue" };
+                const localOptions: any = {
+                    uriVariables: {
+                        type: "DataValue",
+                    },
+                };
                 const content = await consumedThing.readProperty(propertyName, localOptions);
                 const dataSchemaValue = await content.value();
                 const dataValue = dataSchemaValue.valueOf() as DataValueJSON;
