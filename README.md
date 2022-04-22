@@ -4,22 +4,22 @@
 
 A set of tool to bridge the Web of Things protocol and OPCUA.
 
-#### converting a OPCUA object to a WoT 
+#### converting an OPCUA object to a WoT 
 
-The `opcua_classic_to_wot` command create a Wot typedefinition  file by browsing and crawling a particular
-OPCUA object. It then starts a HTTP servient so you can interact with the remote OPCUA server to read,write, subscribe to variables, or call methods.
+The `opcua_classic_to_wot` command creates a Wot type definition  file by browsing and crawling a particular
+OPCUA object. It then starts an HTTP servient, so you can interact with the remote OPCUA server to read, write, subscribe to variables, or call methods.
 
 
 for instance
 
 ```
-$ ts-node opcua_classic_to_wot.ts opc.tcp://localhost:48010  /3:BuildingAutomation/3:AirConditioner_1
+$ ts-node src/opcua_classic_to_wot.ts opc.tcp://localhost:48010  /3:BuildingAutomation/3:AirConditioner_1
 ``` 
 
 #### demo
 
 ``` 
-$ ts-node opcua_classic_to_wot.ts opc.tcp://opcuademo.sterfive.com:26543  /[nsDI]:DeviceSet/[nsOwn]:CoffeeMachine
+$ ts-node src/opcua_classic_to_wot.ts opc.tcp://opcuademo.sterfive.com:26543  /[nsDI]:DeviceSet/[nsOwn]:CoffeeMachine
 
 ```
 you can then visit the 
@@ -36,7 +36,7 @@ Usage:
     
     node-wot-opcua getThing [options]
 
-connect to a OPCUA to browse a node and convert it to a ThingDescription
+connect to an OPCUA to browse a node and convert it to a ThingDescription
 
 Options
 
@@ -62,7 +62,7 @@ Usage:
 
     node-wot-opcua runServer [options]
 
-run a OPCUA thing description and turn it to a WOT server with a http servient
+run an OPCUA thing description and turn it to a WOT server with a http servient
 
 Options:
 
@@ -75,12 +75,12 @@ example:
 
     $ node-wot-opcua runServer -t "thing1.json"
 
-#### converting a OPCUA PubSub datastream to a WoT 
+#### converting an OPCUA PubSub datastream to a WoT 
 
-The `opcua_pubsub_to_wot` command create a Wot typedefinition  file from 
-a OPCUA PubSub MQTT datastream (JSON encoding).
+The `opcua_pubsub_to_wot` command creates a Wot type definition  file from 
+an OPCUA PubSub MQTT datastream (JSON encoding).
 
-It then starts a HTTP servient so you can interact with the remote OPCUA server to read or subscribe to variables.
+It then starts an HTTP servient, so you can interact with the remote OPCUA server to read or subscribe to variables.
 
 
 http://localhost:3000/server-status/properties/CurrentTime?type=Value
