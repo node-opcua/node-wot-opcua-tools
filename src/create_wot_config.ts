@@ -7,7 +7,6 @@
  *
  * ==========================================================================
  */
-import { kebabCase } from "case-anything";
 
 import {
     makeBrowsePath,
@@ -33,10 +32,19 @@ import { Argument, BrowseResult, EUInformation } from "node-opcua-types";
 import { BrowseDescriptionLike, readNamespaceArray } from "node-opcua-pseudo-session";
 
 import { Helpers } from "@node-wot/core";
-import { ExposedThingInit } from "wot-typescript-definitions";
-import { ActionElement, DataSchema } from "wot-thing-description-types";
-import { OPCUAFormElement } from "@node-wot/binding-opcua";
+import * as WoT from "wot-typescript-definitions";
+import { ActionElement, DataSchema, FormElementProperty } from "wot-thing-description-types";
 import { toWotVariant } from "./to_node_wot_type";
+
+// import { OPCUAFormElement } from "@node-wot/binding-opcua";
+interface OPCUAFormElement extends FormElementProperty {
+    href: string;
+    op: string[];
+    "opcua:nodeId"?: string;
+    contentType?: string;
+}
+
+const kebabCase = require("case-anything").kebabCase;
 
 const objectFolderNodeId = resolveNodeId(ObjectIds.ObjectsFolder);
 
@@ -45,7 +53,7 @@ async function extractEURange(session: IBasicSession, nodeId: NodeId): Promise<R
     if (result.statusCode !== StatusCodes.Good) {
         return null;
     }
-    const euRangeNodeId = result.targets[0].targetId;
+    const euRangeNodeId = result.targets![0].targetId;
     const dataValue = await session.read({ nodeId: euRangeNodeId, attributeId: AttributeIds.Value });
     return dataValue.value.value as Range;
 }
@@ -54,7 +62,7 @@ async function extractEngineeringUnits(session: IBasicSession, nodeId: NodeId): 
     if (result.statusCode !== StatusCodes.Good) {
         return null;
     }
-    const engineeringUnitsNodeIds = result.targets[0].targetId;
+    const engineeringUnitsNodeIds = result.targets![0].targetId;
     const dataValue = await session.read({ nodeId: engineeringUnitsNodeIds, attributeId: AttributeIds.Value });
     return dataValue.value.value as EUInformation;
 }
@@ -73,10 +81,10 @@ async function extractInputAndOutputArguments(
     let inputArguments: Argument[] = [];
     let outputArguments: Argument[] = [];
     if (inputResult.statusCode === StatusCodes.Good) {
-        inputArguments = await readArguments(session, inputResult.targets[0].targetId);
+        inputArguments = await readArguments(session, inputResult.targets![0].targetId);
     }
     if (outputResult.statusCode === StatusCodes.Good) {
-        outputArguments = await readArguments(session, outputResult.targets[0].targetId);
+        outputArguments = await readArguments(session, outputResult.targets![0].targetId);
     }
     return { inputArguments, outputArguments };
 }
@@ -104,8 +112,8 @@ function turnArguments(opcuaArguments: Argument[]): DataSchema {
 
     const argumentNames: string[] = [];
     for (const argument of opcuaArguments) {
-        const argumentName = argument.name.toString();
-        properties[argumentName] = convertArgument(argument);
+        const argumentName = argument.name!.toString();
+        properties![argumentName] = convertArgument(argument);
 
         argumentNames.push(argumentName);
     }
@@ -115,7 +123,7 @@ async function addActionInThingDescription(
     name: string,
     session: IBasicSession,
     reference: ReferenceDescription,
-    thingDescription: ExposedThingInit,
+    thingDescription: WoT.ExposedThingInit,
     extra: Extra
 ): Promise<void> {
     const nodeId = reference.nodeId;
@@ -150,7 +158,7 @@ async function addPropertyInThingDescription(
     name: string,
     session: IBasicSession,
     reference: ReferenceDescription,
-    thingDescription: ExposedThingInit,
+    thingDescription: WoT.ExposedThingInit,
     extra: Extra
 ): Promise<void> {
     const nodeId = reference.nodeId;
@@ -163,7 +171,7 @@ async function addPropertyInThingDescription(
     const wotVariant = toWotVariant(dataTypeNodeId, valueRank);
 
     const readOnly = (accessLevel & AccessLevelFlag.CurrentWrite) === 0 ? true : undefined;
-    thingDescription.properties[name] = {
+    thingDescription.properties![name] = {
         href: extra.endpoint,
 
         // type: wotVariant.type,
@@ -190,11 +198,11 @@ async function addPropertyInThingDescription(
 
     if (euRange) {
         // is this standard ?
-        thingDescription.properties[name].minimum = euRange.low;
-        thingDescription.properties[name].maximum = euRange.high;
+        thingDescription.properties![name].minimum = euRange.low;
+        thingDescription.properties![name].maximum = euRange.high;
     }
     if (units) {
-        thingDescription.properties[name].units = units.toString();
+        thingDescription.properties![name].units = units.toString();
     }
 
     const form: OPCUAFormElement = {
@@ -209,8 +217,8 @@ async function addPropertyInThingDescription(
         form.op = ["readproperty", "observeproperty", "unobserveproperty"];
     }
 
-    thingDescription.properties[name].forms = [form];
-    thingDescription.properties[name].uriVariables = {
+    thingDescription.properties![name].forms = [form];
+    thingDescription.properties![name].uriVariables = {
         type: {
             type: "string",
             enum: ["DataValue", "Variant", "Value"],
@@ -238,14 +246,14 @@ async function sessionBrowseAll(session: IBasicSession, browseDescription: Brows
         if (n.statusCode !== StatusCodes.Good) {
             return browseResult;
         }
-        browseResult.references = browseResult.references.concat(n.references);
+        browseResult.references = browseResult.references!.concat(n.references || []);
         continuationPoint = n.continuationPoint;
     }
     return browseResult;
 }
 
 async function _exploreNode(
-    thingDescription: ExposedThingInit,
+    thingDescription: WoT.ExposedThingInit,
     extra: Extra,
     session: IBasicSession,
     nodeId: NodeId,
@@ -268,8 +276,8 @@ async function _exploreNode(
         return;
     }
 
-    for (const reference of browseResult.references) {
-        const name = prefix + reference.browseName.name.toString();
+    for (const reference of browseResult.references || []) {
+        const name = prefix + reference.browseName!.name!.toString();
         switch (reference.nodeClass) {
             case NodeClass.Variable:
                 await addPropertyInThingDescription(name, session, reference, thingDescription, extra);
@@ -286,7 +294,7 @@ async function _exploreNode(
         }
     }
 }
-async function exploreNode(thingDescription: ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, prefix = "") {
+async function exploreNode(thingDescription: WoT.ExposedThingInit, extra: Extra, session: IBasicSession, nodeId: NodeId, prefix = "") {
     await _exploreNode(thingDescription, extra, session, nodeId, "HasChild", prefix, ".");
     await _exploreNode(thingDescription, extra, session, nodeId, "Organizes", prefix, "/");
 }
@@ -308,12 +316,11 @@ export async function getThingDescriptionFromSession(
     session: IBasicSession,
     pathToObject: string,
     extra: Extra
-): Promise<ExposedThingInit> {
+): Promise<WoT.ExposedThingInit> {
     const namespaces = await readNamespaceArray(session);
     const nsDI = namespaces.findIndex((value) => value === "http://opcfoundation.org/UA/DI/");
     if (!nsDI) {
-        console.log("Namespace DI not found");
-        return;
+        throw new Error("Namespace DI not found");
     }
     const nsOwn = 1;
 
@@ -322,16 +329,15 @@ export async function getThingDescriptionFromSession(
     // browse the device set folder
     const result = await session.translateBrowsePath(makeBrowsePath(objectFolderNodeId, pathToObject2));
     if (result.statusCode !== StatusCodes.Good) {
-        console.log(" cannot find object", pathToObject2.toString());
-        return;
+        throw  new Error(" cannot find object: " + pathToObject2.toString());
     }
-    const deviceNodeId = result.targets[0].targetId;
+    const deviceNodeId = result.targets![0].targetId;
     console.log(" device NodeId ", deviceNodeId.toString());
 
     const browseName = await session.read({ nodeId: deviceNodeId, attributeId: AttributeIds.BrowseName });
-    const title = kebabCase((browseName.value.value as QualifiedName).name.toString());
+    const title = kebabCase((browseName.value!.value as QualifiedName).name!.toString());
 
-    const thingDescription: ExposedThingInit = {
+    const thingDescription: WoT.ExposedThingInit = {
         "@context": ["https://www.w3.org/2019/wot/td/v1", { iot: "http://example.org/iot" }],
         "@type": ["Thing"],
         securityDefinitions: { nosec_sc: { scheme: "nosec" } },
@@ -352,7 +358,7 @@ export async function getThingDescriptionFromSession(
         href: extra.endpoint || "",
         op: ["readproperty", "observeproperty"], //  "observeproperty", "unobserveproperty"],
         // special properties (just for us)
-        "opcua:nodeId": resolveNodeId(VariableIds.Server_ServerStatus_CurrentTime),
+        "opcua:nodeId": resolveNodeId(VariableIds.Server_ServerStatus_CurrentTime).toString(),
         //  contentType: "application/opcua+json;type=DataValue",
         contentType: "application/json",
     };
@@ -365,7 +371,7 @@ export async function getThingDescriptionFromSession(
     //     //  contentType: "application/opcua+json;type=DataValue",
     //     contentType: "application/json",
     // };
-    thingDescription.properties.CurrentTime = {
+    thingDescription.properties!.CurrentTime = {
         href: "/",
         type: "object", // toNodeWotType(resolveNodeId(DataType.DateTime)),
         description: "current time",
@@ -385,7 +391,7 @@ export async function getThingDescriptionFromSession(
     return thingDescription;
 }
 
-export async function getThingDescription(endpoint: string, pathToObject: string): Promise<ExposedThingInit> {
+export async function getThingDescription(endpoint: string, pathToObject: string): Promise<WoT.ExposedThingInit> {
     const client = OPCUAClient.create({
         endpointMustExist: false,
         connectionStrategy: {

@@ -10,9 +10,18 @@
 import { OPCUAClient, ClientSession, IBasicSession } from "node-opcua";
 import { DataSetMetaDataType, PublishedVariableDataType } from "node-opcua-types";
 
-import { BrokerConnectionTransport, Connection, DatagramConnectionTransport, PubSubSession } from "node-opcua-pubsub-client";
-import { PublishedDataItems } from "node-opcua-pubsub-client/dist2/published_dataset";
-import { DataSetWriter } from "node-opcua-pubsub-client/dist2/dataset_writer";
+import { 
+    BrokerConnectionTransport, 
+    Connection, 
+    DatagramConnectionTransport, 
+    PubSubSession 
+} from "@sterfive/node-opcua-pubsub-client";
+import { 
+    PublishedDataItems 
+} from "@sterfive/node-opcua-pubsub-client";
+import { 
+    DataSetWriter 
+} from "@sterfive/node-opcua-pubsub-client";
 
 export interface ConnectionData {
     transport?: BrokerConnectionTransport | DatagramConnectionTransport;
@@ -21,7 +30,7 @@ export interface ConnectionData {
 }
 
 export interface PubSubInfo {
-    dataSetMeta: DataSetMetaDataType;
+    dataSetMeta: DataSetMetaDataType | null;
     publishedVariables: PublishedVariableDataType[];
     dataSetWriter?: DataSetWriter;
     queueName: string;
@@ -80,6 +89,7 @@ export async function getDataSetWriterInConnectionByName(connection: Connection)
             }
         }
     }
+    return null;
 }
 
 export async function extractPubSubInfoSession(
@@ -134,22 +144,21 @@ export async function extractPubSubInfoSession(
             Valid dataset names for ${publishedDataSetName} are = ${Object.keys(map2).join(" ")}`);
     
         for(const d of Object.values(map2)) {
-            const queueName = await d.getMetaDataQueueName();
+            //const queueName = await d.get();
             const browseName = await d.getBrowseName();
-            console.log({ queueName, browseName,});
+            console.log({ browseName,});
         }
         return { dataSetMeta: null, publishedVariables: [], addressUri: "", queueName: "" };
     }
-    const connection = await dataSetWriter.getConnection();
-
-   let addressUri = await connection.getAddressUrl();
+     
+    let addressUri = (await dataSetWriter.getTransportSettings_ResourceUri() ) || "";
 
     // const resourceUri = await dataSetWriter.getResourceUri();
     console.log("resourceUri  = ", addressUri);
     
     let queueName: string = ""
     try {
-        queueName = await dataSetWriter.getQueueName();
+        queueName = (await dataSetWriter.getTransportSettings_QueueName()) || "";
         console.log("queueName     = ", queueName);
     } catch(err) {
     }

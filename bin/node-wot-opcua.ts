@@ -55,7 +55,7 @@ example:
                     console.log(json);
                 }
             } catch (e) {
-                console.log(e.message);
+                console.log((e as Error).message);
             }
         });
 }
@@ -92,7 +92,7 @@ example:
                 console.log(dataSetMeta?.toString());
                 console.log(publishedVariables?.toString());
             } catch (e) {
-                console.log(e.message);
+                console.log((e as Error).message);
             }
         });
 }
@@ -139,7 +139,7 @@ example:
                     console.log(json);
                 }
             } catch (e) {
-                console.log(e.message);
+                console.log((e as Error).message);
             }
         });
 }
@@ -215,7 +215,9 @@ node-wot-opcua runPubSubThing -e opc.tcp://opcuademo.sterfive.com:26543 -d Coffe
         });
 }
 
+console.log("Loading node-wot-opcua-tools...");
 (async () => {
+    console.log("Welcome to node-wot-opcua-tools");
     const program = new Command();
     program.version("0.0.1");
     install_getThing(program);
@@ -225,5 +227,7 @@ node-wot-opcua runPubSubThing -e opc.tcp://opcuademo.sterfive.com:26543 -d Coffe
     install_runPubSubServer(program);
     program.showHelpAfterError("(add --help for additional information)");
     program.showSuggestionAfterError();
+
+    console.log("Type 'node-wot-opcua --help' to see available commands.");
     program.parse(process.argv);
 })();

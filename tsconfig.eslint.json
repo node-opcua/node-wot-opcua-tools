@@ -4,9 +4,9 @@
         "rootDir": "."
     },
     "files": ["*.ts"],
-    "exclude": [],
+    "exclude": ["node_modules", "dist", "build", "tests", "**/*.spec.ts"],
     "include": ["**/*.ts"],
     "compilerOptions": {
-        "experimentalDecorators": true
+        "experimentalDecorators": false
     }
 }

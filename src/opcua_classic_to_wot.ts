@@ -9,13 +9,12 @@
  */
 
 import { HttpServer } from "@node-wot/binding-http";
-import { ThingProperty } from "@node-wot/td-tools";
-import { Servient } from "@node-wot/core";
+import { ThingProperty, Servient } from "@node-wot/core";
 import { OPCUAClientFactory } from "@node-wot/binding-opcua";
-
-import { ExposedThing, InteractionOutput, PropertyReadHandler, ThingDescription } from "wot-typescript-definitions";
+import * as WoT from "wot-typescript-definitions";
+import { DataValueOptions } from "node-opcua-data-value";
 import { DataType } from "node-opcua-variant";
-import { DataValueJSON } from "node-opcua-json";
+import { DataValueJSON } from "@sterfive/node-opcua-json";
 
 import { getThingDescription } from "./create_wot_config";
 
@@ -24,7 +23,7 @@ interface makeServerClientResult {
     htmlServer: Servient;
     opcuaClient: Servient;
 }
-export async function makeServerClient(thingDescription: ThingDescription, port: number): Promise<makeServerClientResult> {
+export async function makeServerClient(thingDescription: WoT.ThingDescription, port: number): Promise<makeServerClientResult> {
     const httpServientServer = new Servient();
     const httpConfig = {
         port,
@@ -64,13 +63,13 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
     console.log(`consume ${consumedThing.getThingDescription().title}`);
 
     // do the binding/glueing
-    for (const [propertyName, property] of Object.entries(thingDescription.properties) as [string, ThingProperty][]) {
-        exposedThing.setPropertyReadHandler(propertyName, async (options) => {
+    for (const [propertyName, property] of Object.entries(thingDescription.properties!) as [string, ThingProperty][]) {
+        exposedThing.setPropertyReadHandler(propertyName, async (options: WoT.InteractionOptions |undefined): Promise<WoT.InteractionInput> => {
             const type =
                 options && options.uriVariables && (<any>options.uriVariables).type ? (<any>options.uriVariables).type : "Value";
 
-            const formIndex = options ? options.formIndex : 0;
-            const form = property.forms[formIndex];
+            const formIndex : number= options ? options.formIndex || 0: 0;
+            const form = property.forms![formIndex];
             const contentType = form?.contentType || `application/opcua+json;type=${type}`;
 
             console.log("In ReadHandler of ", propertyName, options, "contentType= ", contentType);
@@ -82,7 +81,7 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
                 };
                 const content = await consumedThing.readProperty(propertyName, localOptions);
                 const dataSchemaValue = await content.value();
-                const dataValue = dataSchemaValue.valueOf() as DataValueJSON;
+                const dataValue = dataSchemaValue!.valueOf() as DataValueJSON;
 
                 const a = (() => {
                     switch (type) {
@@ -95,9 +94,9 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
                             return dataValue.Value?.Body;
                     }
                 })();
-                return a; // ? JSON.stringify(a) : "";
+                return a as DataValueOptions; // ? JSON.stringify(a) : "";
             } catch (err) {
-                return JSON.stringify({ Type: DataType.String, Body: err.message.split("\n") });
+                return JSON.stringify({ Type: DataType.String, Body: (err as Error).message.split("\n") });
             }
         });
 
@@ -124,14 +123,14 @@ export async function makeServerClient(thingDescription: ThingDescription, port:
     const delegated: Record<string, unknown> = {};
 
     exposedThing.setPropertyObserveHandler = function (
-        this: ExposedThing,
+        this: WoT.ExposedThing,
         propertyName: string,
-        handler: PropertyReadHandler
-    ): ExposedThing {
+        handler: WoT.PropertyReadHandler
+    ): WoT.ExposedThing {
         if (!delegated[propertyName]) {
             delegated[propertyName] = 1;
 
-            const listener = async (data: InteractionOutput): Promise<void> => {
+            const listener = async (data: WoT.InteractionOutput): Promise<void> => {
                 const property = (<any>exposedThing).properties[propertyName];
                 const ps = property.getState();
 
@@ -208,7 +207,7 @@ async function main() {
     const thingDescription = await getThingDescription(endpointUrl, opcuaPathToObject);
 
     if (thingDescription) {
-        const { shutdown } = await makeServerClient(thingDescription as ThingDescription, port);
+        const { shutdown } = await makeServerClient(thingDescription as WoT.ThingDescription, port);
         await gracefulTermination(10 * 120 * 1000, shutdown);
     }
 }

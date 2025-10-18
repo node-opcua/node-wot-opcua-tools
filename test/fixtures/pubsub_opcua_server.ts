@@ -30,8 +30,9 @@ import {
     PubSubConfigurationDataType,
 } from "node-opcua-types";
 import { AttributeIds, DataType, resolveNodeId } from "node-opcua";
-import { MyMqttJsonPubSubConnectionDataType, Transport } from "node-opcua-pubsub-expander";
-import { installPubSub } from "node-opcua-pubsub-server";
+import {  Transport } from "@sterfive/node-opcua-pubsub-expander";
+import { installPubSub } from "@sterfive/node-opcua-pubsub-server";
+import { MyMqttJsonPubSubConnectionDataType } from "@sterfive/node-opcua-pubsub-common";
 
 import { createClassicOpcuaServer } from "./classic_opcua_server";
 

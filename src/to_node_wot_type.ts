@@ -6,8 +6,9 @@
  * information regarding copyright ownership.
  *
  * ==========================================================================
- */import { NodeId, DataType } from "node-opcua";
-import { DataSchema } from "wot-typescript-definitions";
+ */
+import { NodeId, DataType } from "node-opcua";
+import * as WoT from "wot-typescript-definitions";
 
 interface NodeWotType {
     type: "boolean" | "integer" | "number" | "string" | "object" | "array" | "null";
@@ -16,7 +17,7 @@ interface NodeWotType {
     basicDataType: number;
 }
 
-export function toWotVariant(dataTypeNodeId: NodeId, valueRank: number, dimensions?: number[]): DataSchema {
+export function toWotVariant(dataTypeNodeId: NodeId, valueRank: number, dimensions?: number[]): WoT.DataSchema {
     if (valueRank >= 1) {
         // array or matrice
         return {

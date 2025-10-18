@@ -8,20 +8,17 @@
  * ==========================================================================
  */
 import { writeFileSync } from "fs";
-import { OPCUAServer, DataType, StatusCodes, SessionContext, DataValue } from "node-opcua";
-import { ThingDescription } from "wot-typescript-definitions";
-
-import fetch, { Request } from "node-fetch";
-import { expect } from "chai";
-import { ProtocolHelpers } from "@node-wot/core";
-
+import { OPCUAServer } from "node-opcua";
+import * as WoT from "wot-typescript-definitions";
 import { getThingDescription } from "../src/create_wot_config";
 import { makeServerClient } from "../src/opcua_classic_to_wot";
 import { createClassicOpcuaServer } from "./fixtures/classic_opcua_server";
+import { expect } from "chai";
 
 const doDebug = false;
 const httpPort = 8009;
 const opcuaPort = 2002;
+
 describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
     let server: OPCUAServer;
     before(async () => {
@@ -39,7 +36,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
 
             doDebug && writeFileSync("tmp.json", JSON.stringify(thingDescription, null, " "), "ascii");
 
-            const { shutdown, htmlServer, opcuaClient } = await makeServerClient(thingDescription as ThingDescription, httpPort);
+            const { shutdown, htmlServer, opcuaClient } = await makeServerClient(thingDescription as WoT.ThingDescription, httpPort);
             _shutdown = shutdown;
         });
         after(async () => {
@@ -51,7 +48,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
             const response = await fetch(`http://localhost:${httpPort}/my-device/properties/CurrentTime`);
             expect(response.status).to.equal(200);
             expect(response.statusText).to.eql("OK");
-            const body = (await ProtocolHelpers.readStreamFully(response.body)).toString();
+            const body = await response.text();
             console.log("Body = ", body);
             expect(typeof body).to.equal("string");
         });
@@ -109,9 +106,7 @@ describe("Testing OPCUA Classic to HTTP Wot bridge bridge", () => {
                 console.log(response2);
                 expect(response2.status).to.equal(200);
                 expect(response2.statusText).to.eql("OK");
-                const buf = await ProtocolHelpers.readStreamFully(response2.body);
-                // why do we need to parse twice ?
-                const body = JSON.parse(buf.toString());
+                const body = await response2.json();
                 console.log("Body = ", JSON.stringify(body, null, ""));
                 // delete body.SourceTimestamp;
                 expect(body).to.eql(expected);

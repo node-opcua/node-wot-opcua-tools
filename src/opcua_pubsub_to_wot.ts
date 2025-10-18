@@ -13,8 +13,7 @@ import { HttpServer } from "@node-wot/binding-http";
 import { OPCUAClientFactory } from "@node-wot/binding-opcua";
 import { Servient } from "@node-wot/core";
 import { DataSetMetaDataType, PublishedVariableDataType } from "node-opcua-types";
-import { JSONNetworkMessage } from "node-opcua-pubsub-expander";
-
+import { JSONNetworkMessage } from "@sterfive/node-opcua-pubsub-expander";
 import { extractPubSubInfo, PubSubInfo } from "./extract_pubsub_info";
 import { toWotVariant } from "./to_node_wot_type";
 
@@ -22,9 +21,15 @@ export async function buildThingDescriptionFromOPCUAPubSub({
     dataSetMeta,
     publishedVariables,
 }: {
-    dataSetMeta: DataSetMetaDataType;
+    dataSetMeta: DataSetMetaDataType |null,
     publishedVariables: PublishedVariableDataType[];
 }): Promise<WoT.ThingDescription> {
+    if (!dataSetMeta) {
+        throw new Error("DataSetMetaDataType is missing");
+    }
+    if (!dataSetMeta.fields || dataSetMeta.fields.length === 0) {
+        throw new Error("DataSetMetaDataType has no fields");
+    }
     const thingDescription: WoT.ThingDescription = {
         title: "some-name",
         "@context": ["https://www.w3.org/2019/wot/td/v1", { iot: "http://example.org/iot" }],
@@ -36,13 +41,16 @@ export async function buildThingDescriptionFromOPCUAPubSub({
         },
         security: "nosec_sc",
     };
+    if (thingDescription.properties === undefined) {
+        thingDescription.properties = {};
+    }
 
     for (let index = 0; index < dataSetMeta.fields.length; index++) {
         const field = dataSetMeta.fields[index];
         console.log("adding ", field.name);
 
         const wotVariant = toWotVariant(field.dataType, field.valueRank);
-        thingDescription.properties[field.name] = {
+        thingDescription.properties[field.name!] = {
             type: wotVariant.type,
             properties: wotVariant.properties,
             description: field.description.text || "",
@@ -123,6 +131,9 @@ export interface STUFF {
 export async function makeOPCUAPubSubServient(data: PubSubInfo, port: number): Promise<STUFF> {
     const { dataSetMeta, publishedVariables, addressUri, queueName } = data;
 
+    if (!dataSetMeta) {
+        throw new Error("DataSetMetaDataType is missing");
+    }
     const thingDescription = await buildThingDescriptionFromOPCUAPubSub(data);
 
     const { htppServient, wot } = await getWot(port);
@@ -134,9 +145,9 @@ export async function makeOPCUAPubSubServient(data: PubSubInfo, port: number): P
     const payload = mqttListener.payload;
 
     // set property handlers (using async-await)
-    for (let index = 0; index < dataSetMeta.fields.length; index++) {
-        const field = dataSetMeta.fields[index];
-        thing.setPropertyReadHandler(field.name, async () => (payload[field.name] as any) || 0);
+    for (let index = 0; index < dataSetMeta.fields!.length; index++) {
+        const field = dataSetMeta.fields![index]!;
+        thing.setPropertyReadHandler(field.name!, async () => (payload[field.name!] as any) || 0);
     }
     // expose the thing
     thing.expose().then(() => {

@@ -9,9 +9,6 @@
  */
 import { OPCUAServer, UAVariable, DataType } from "node-opcua";
 import { expect } from "chai";
-import fetch from "node-fetch";
-import { ProtocolHelpers } from "@node-wot/core";
-
 import { extractPubSubInfo } from "../src/extract_pubsub_info";
 import { makeOPCUAPubSubServient, STUFF } from "../src/opcua_pubsub_to_wot";
 import { createPubSubOpcuaServer } from "./fixtures/pubsub_opcua_server";
@@ -25,7 +22,7 @@ describe("Testing OPCUA PubSub to HTTP Wot bridge bridge", () => {
     let server: OPCUAServer;
 
     async function changeTemperatureInServer(temperature: number) {
-        const temperatureNode = server.engine.addressSpace.findNode("ns=1;s=Temperature")! as UAVariable;
+        const temperatureNode = server.engine.addressSpace!.findNode("ns=1;s=Temperature")! as UAVariable;
         temperatureNode.setValueFromSource({ dataType: DataType.Double, value: temperature });
     };
     before(async () => {
@@ -53,7 +50,7 @@ describe("Testing OPCUA PubSub to HTTP Wot bridge bridge", () => {
             const response = await fetch(`http://localhost:${httpPort}/some-name/properties/Temperature`);
             expect(response.status).to.equal(200);
             expect(response.statusText).to.eql("OK");
-            const body = (await ProtocolHelpers.readStreamFully(response.body)).toString();
+            const body = await response.json();
             console.log("Body = ", body, "(", typeof body, ")");
             expect(typeof body).to.equal("string");
             return parseFloat(body);
